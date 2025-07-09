@@ -1,0 +1,121 @@
+<div class="filter-dropdown-container" #dropdownContainer>
+    <button class="filter-button" [class.active]="isOpen" [class.filtered]="hasActiveFilters()"
+        (click)="toggleDropdown()" #filterButton>
+        <span class="filter-icon">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46 22,3"></polygon>
+            </svg>
+        </span>
+        <span class="dropdown-arrow" [class.rotated]="isOpen">▼</span>
+    </button>
+
+    <div class="filter-dropdown" [class.show]="isOpen" [class.dropdown-up]="shouldShowUp"
+        [class.dropdown-left]="shouldAlignLeft" #dropdown>
+
+        <!-- Sort Section -->
+        <div class="filter-section sort-section">
+            <h4 class="section-title">Sort</h4>
+            <div class="sort-options">
+                <button class="sort-btn" [class.active]="currentSort === 'asc'" (click)="setSortDirection('asc')">
+                    <span class="sort-icon">A↓</span> Asc
+                </button>
+                <button class="sort-btn" [class.active]="currentSort === 'desc'" (click)="setSortDirection('desc')">
+                    <span class="sort-icon">Z↑</span> Desc
+                </button>
+            </div>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="filter-section">
+            <h4 class="section-title">Filter</h4>
+
+            <!-- Advanced Filter Dropdown -->
+            <div class="advanced-filter-container">
+                <div class="filter-type-selector" [class.open]="showAdvancedOptions">
+                    <button class="filter-type-btn" (click)="toggleAdvancedOptions()">
+                        <span class="condition-indicator" [class.active]="hasActiveCondition()">⚡</span>
+                        <span class="filter-type-text">{{getSelectedFilterLabel()}}</span>
+                        <span class="dropdown-arrow-small" [class.rotated]="showAdvancedOptions">▼</span>
+                    </button>
+
+                    <div class="advanced-options" [class.show]="showAdvancedOptions">
+                        <button *ngFor="let option of getFilterOptions()" class="filter-option-btn"
+                            [class.selected]="filter.condition?.operator === option.value"
+                            (click)="selectFilterOption(option.value)">
+                            {{option.label}}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Condition Input Fields -->
+                <div *ngIf="filter.condition && needsInput(filter.condition.operator)" class="condition-inputs">
+                    <input type="text" placeholder="Value" [(ngModel)]="filter.condition.value"
+                        (input)="onConditionChange()" class="condition-input">
+
+                    <input *ngIf="filter.condition.operator === 'between'" type="text" placeholder="To"
+                        [(ngModel)]="filter.condition.value2" (input)="onConditionChange()" class="condition-input">
+                </div>
+            </div>
+
+            <!-- Search Box -->
+            <div class="search-container">
+                <input type="text" placeholder="Search values..." [(ngModel)]="filter.searchText"
+                    (input)="onSearchChange()" class="search-input">
+                <span class="search-icon">🔍</span>
+            </div>
+
+            <!-- Load Options Button -->
+            <div class="load-options-container" *ngIf="filter.options.length === 0">
+                <button class="load-options-btn" (click)="loadFilterOptions()">
+                    Load Filter Options
+                </button>
+            </div>
+
+            <!-- Filter Options List -->
+            <div class="filter-options" *ngIf="filter.options.length > 0">
+                <div class="filter-option select-all">
+                    <label class="checkbox-label">
+                        <input type="checkbox" [checked]="filter.showAll" (change)="onSelectAllChange($event)">
+                        <span class="custom-checkbox"></span>
+                        <span class="option-text">All ({{getVisibleOptionsCount()}})</span>
+                    </label>
+                </div>
+
+                <div class="options-list">
+                    <div *ngFor="let option of getFilteredOptions()" class="filter-option">
+                        <label class="checkbox-label">
+                            <input type="checkbox" [checked]="option.selected"
+                                (change)="onOptionChange(option, $event)">
+                            <span class="custom-checkbox"></span>
+                            <span class="option-text" [title]="option.label">{{option.label}}</span>
+                        </label>
+                    </div>
+
+                    <!-- Blanks option -->
+                    <div class="filter-option">
+                        <label class="checkbox-label">
+                            <input type="checkbox" [checked]="blanksSelected" (change)="onBlanksChange($event)">
+                            <span class="custom-checkbox"></span>
+                            <span class="option-text">(Blanks)</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Auto Apply -->
+            <div class="auto-apply-container">
+                <label class="checkbox-label">
+                    <input type="checkbox" [checked]="filter.autoApply" (change)="onAutoApplyChange($event)">
+                    <span class="custom-checkbox"></span>
+                    <span class="option-text">Auto Apply</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Footer Buttons -->
+        <div class="filter-footer">
+            <button class="btn btn-secondary" (click)="clearFilter()">Clear</button>
+            <button class="btn btn-primary" (click)="applyFilter()">Apply</button>
+        </div>
+    </div>
+</div>

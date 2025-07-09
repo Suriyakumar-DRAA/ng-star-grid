@@ -1,0 +1,23 @@
+<div class="app-container">
+    <header class="app-header">
+        <h1>Excel-like Data Filter Demo</h1>
+        <p>Interactive data table with advanced filtering capabilities</p>
+
+        <div class="demo-selector">
+            <button class="demo-btn" [class.active]="currentDemo === 'client'" (click)="currentDemo = 'client'">
+                Client-Side (200 records)
+            </button>
+            <button class="demo-btn" [class.active]="currentDemo === 'server'" (click)="currentDemo = 'server'">
+                Server-Side (10,000 records)
+            </button>
+        </div>
+    </header>
+
+    <main class="app-main">
+        <app-data-table *ngIf="currentDemo === 'client'" [data]="sampleData" [columns]="columns">
+        </app-data-table>
+
+        <app-server-data-table *ngIf="currentDemo === 'server'" [columns]="columns">
+        </app-server-data-table>
+    </main>
+</div>

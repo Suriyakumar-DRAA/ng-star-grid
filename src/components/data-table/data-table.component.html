@@ -1,0 +1,75 @@
+<div class="data-table-container">
+  <div class="table-header">
+    <div class="table-info-row">
+      <span class="record-count">{{filteredData.length}} of {{originalData.length}} records</span>
+
+      <!-- Filter Toggle Button - Top Right -->
+      <div class="filter-toggle-container">
+        <label class="filter-toggle-label">
+          <input type="checkbox" [(ngModel)]="filtersEnabled" (change)="onFilterToggleChange()"
+            class="filter-toggle-checkbox">
+          <span class="filter-toggle-slider"></span>
+          <span class="filter-toggle-text">Enable Excel like Filters</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Active Filters Strip -->
+    <div *ngIf="hasActiveFilters() && filtersEnabled" class="active-filters-strip">
+      <div class="filters-label">Active Filters:</div>
+      <div class="filter-tags">
+        <span *ngFor="let filterInfo of getActiveFiltersInfo()" class="filter-tag">
+          <span class="filter-column">{{filterInfo.column}}</span>
+          <span class="filter-description">{{filterInfo.description}}</span>
+          <button class="remove-filter-btn" (click)="removeSpecificFilter(filterInfo.column)"
+            title="Remove this filter">×</button>
+        </span>
+        <span *ngIf="currentSort.direction" class="filter-tag sort-tag">
+          <span class="filter-column">Sort</span>
+          <span class="filter-description">{{getSortColumnLabel()}} {{currentSort.direction === 'asc' ? '↑' :
+            '↓'}}</span>
+          <button class="remove-filter-btn" (click)="clearSort()" title="Remove sort">×</button>
+        </span>
+      </div>
+      <button *ngIf="hasActiveFilters() && filtersEnabled" class="clear-all-btn" (click)="clearAllFilters()">
+        Clear All Filters
+      </button>
+    </div>
+  </div>
+
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead>
+        <tr class="header-row">
+          <th *ngFor="let column of columns" class="header-cell" [class.sortable]="column.sortable">
+            <div class="header-content">
+              <span class="column-label" (click)="toggleSort(column.key)">
+                {{column.label}}
+                <span *ngIf="getSortDirection(column.key)" class="sort-indicator">
+                  {{getSortDirection(column.key) === 'asc' ? '↑' : '↓'}}
+                </span>
+              </span>
+              <app-filter-dropdown *ngIf="filters.get(column.key) && filtersEnabled" [filter]="filters.get(column.key)!"
+                (filterChange)="onFilterChange(column.key, $event)" (clearFilterEvent)="onClearFilter(column.key)"
+                (sortChange)="onSortChange($event)">
+              </app-filter-dropdown>
+            </div>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of filteredData; let i = index" class="data-row" [class.even]="i % 2 === 0"
+          [class.odd]="i % 2 === 1">
+          <td *ngFor="let column of columns" class="data-cell" [attr.data-type]="column.type">
+            <span class="cell-content">{{formatCellValue(row[column.key], column.type)}}</span>
+          </td>
+        </tr>
+        <tr *ngIf="filteredData.length === 0" class="no-data-row">
+          <td [colSpan]="columns.length" class="no-data-cell">
+            No data matches the current filters
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
