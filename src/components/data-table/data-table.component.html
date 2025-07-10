@@ -1,11 +1,23 @@
 <div class="data-table-container">
   <div class="table-header">
-    <div class="table-info-row">
-      <span class="record-count">{{filteredData.length}} of {{originalData.length}} records</span>
-
-      <!-- Filter Toggle Button - Top Right -->
-      <div class="filter-toggle-container">
-        <label class="filter-toggle-label">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <!-- Left: Record Count -->
+      <div>
+        <span class="record-count">{{filteredData.length}} of {{originalData.length}} records</span>
+      </div>
+      <!-- Right: btn-group and Excel filter toggle, spaced apart -->
+      <div class="d-flex align-items-center gap-3">
+        <!-- <div class="btn-group" role="group" aria-label="Small radio toggle group me-2">
+          <input type="radio" class="btn-check" id="client" name="renderSide" [value]="'client'" [(ngModel)]="renderSide">
+          <label class="btn btn-outline-primary" for="client">
+            Client Side
+          </label>
+          <input type="radio" class="btn-check" id="server" name="renderSide" [value]="'server'" [(ngModel)]="renderSide">
+          <label class="btn btn-outline-primary" for="server">
+            Server Side
+          </label>
+        </div> -->
+        <label class="filter-toggle-label mb-0 ms-2">
           <input type="checkbox" [(ngModel)]="filtersEnabled" (change)="onFilterToggleChange()"
             class="filter-toggle-checkbox">
           <span class="filter-toggle-slider"></span>

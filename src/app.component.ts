@@ -15,7 +15,6 @@ export class AppComponent {
   currentDemo: 'client' | 'server' = 'client';
 
   columns: TableColumn[] = [
-    { key: 'id', label: 'ID', type: 'number', sortable: true },
     { key: 'name', label: 'Name', type: 'text', sortable: true },
     { key: 'email', label: 'Email', type: 'text', sortable: true },
     { key: 'department', label: 'Department', type: 'text', sortable: true },
@@ -119,7 +118,6 @@ export class AppComponent {
       const isActive = Math.random() > 0.15;
 
       employees.push({
-        id: i,
         name,
         email,
         department,

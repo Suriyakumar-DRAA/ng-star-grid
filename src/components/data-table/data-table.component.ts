@@ -21,7 +21,8 @@ export class DataTableComponent implements OnInit, OnDestroy {
   originalData: TableData[] = [];
   filters: Map<string, ColumnFilter> = new Map();
   currentSort: SortOption = { direction: null, column: '' };
-  filtersEnabled = false; // Default to false (off)
+  filtersEnabled = true; // Default to false (off)
+  renderSide: 'client' | 'server' = 'client'; // Default to client-side rendering
 
   private destroy$ = new Subject<void>();
 
