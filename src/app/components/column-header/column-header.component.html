@@ -1,0 +1,16 @@
+<div class="d-flex justify-content-between align-items-center p-2 ag-column-header">
+  <span class="fw-semibold">{{ config.label }}</span>
+  
+  <div class="d-flex align-items-center" *ngIf="excelFiltersEnabled && config.filterable">
+    <button 
+      type="button"
+      data-filter-trigger
+      class="btn btn-sm p-1"
+      [class.btn-primary]="hasActiveFilter"
+      [class.btn-outline-secondary]="!hasActiveFilter"
+      (click)="onFilter($event)"
+      style="font-size: 0.7em; line-height: 1;">
+      ▼
+    </button>
+  </div>
+</div>

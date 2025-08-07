@@ -1,0 +1,39 @@
+/* Bootstrap-based column header styles */
+.ag-column-header {
+  .d-flex.justify-content-between.align-items-center {
+    padding: 0.75rem 1rem;
+    border-radius: var(--theme-radius-sm);
+    transition: background-color 0.2s ease;
+  }
+
+  .d-flex.justify-content-between.align-items-center:hover {
+    background-color: var(--theme-hover);
+  }
+
+
+  .btn-primary {
+    background-color: var(--theme-activeBg);
+    border-color: var(--theme-activeBg);
+    color: var(--theme-activeText);
+    box-shadow: var(--theme-shadow);
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--theme-shadow-lg);
+  }
+
+  .btn-outline-secondary {
+    color: var(--theme-textSecondary);
+    border-color: var(--theme-border);
+    background-color: transparent;
+  }
+
+  .btn-outline-secondary:hover {
+    background-color: var(--theme-hover);
+    border-color: var(--theme-primary);
+    color: var(--theme-text);
+    transform: translateY(-1px);
+    box-shadow: var(--theme-shadow);
+  }
+}

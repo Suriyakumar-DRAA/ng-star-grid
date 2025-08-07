@@ -1,0 +1,33 @@
+/* Bootstrap-based filter panel styles */
+.ag-filter-panel {
+  .card-header {
+    background-color: var(--theme-headerBg) !important;
+    border-color: var(--theme-border);
+  }
+
+  .card-body {
+    max-height: 480px;
+    overflow-y: auto;
+    background: #f6f6f6;
+  }
+
+  .spinner {
+    border: 2px solid var(--theme-border);
+    border-top: 2px solid var(--theme-primary);
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
+  }
+}
+
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}

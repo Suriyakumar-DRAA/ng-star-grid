@@ -1,0 +1,88 @@
+<div class="container-fluid">
+  <div class="">
+    <!-- Active Filters -->
+    <div class="active-filter mb-2" *ngIf="activeFilters.size > 0 || searchTerm">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          <span class="fw-medium small">Active Filters:</span>
+
+          <!-- Search Filter -->
+          <span class="badge bg-primary d-flex align-items-center gap-1" *ngIf="searchTerm">
+            Search: "{{ searchTerm }}"
+            <button type="button" class="btn-close btn-close-white" aria-label="Close"
+              (click)="searchTerm=''; onSearchChange()" style="font-size: 0.6em;"></button>
+          </span>
+
+          <!-- Column Filters -->
+          <span class="badge bg-primary d-flex align-items-center gap-1" *ngFor="let filter of activeFiltersArray">
+            {{ getFilterLabel(filter.column) }}
+            <button type="button" class="btn-close btn-close-white" aria-label="Close"
+              (click)="removeFilter(filter.column)" style="font-size: 0.6em;"></button>
+          </span>
+        </div>
+
+        <button class="btn btn-light border btn-sm" (click)="clearAllFilters()">
+          Clear All
+        </button>
+      </div>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="">
+      <div class="d-flex justify-content-end mb-2 gap-2">
+        <!-- Search Box (not in an input group) -->
+        <div class="search-container col-12">
+          <i class="bi bi-search search-icon"></i>
+          <input type="text" class="form-control form-control-sm search-input" placeholder="Search all columns..." aria-label="Search"
+            [(ngModel)]="searchTerm" (ngModelChange)="onSearchChange()">
+        </div>
+        <!-- Export to Excel Button -->
+        <button type="button" class="btn btn-light btn-sm border">
+          <i class="bi bi-file-earmark-arrow-down me-1"></i>
+          Export Excel
+        </button>
+
+      </div>
+
+    </div>
+
+    <!-- Data Table -->
+    <div class="table-responsive ag-datatables" style="max-height: 600px; overflow-y: auto;">
+      <table class="table table-hover mb-0">
+        <thead class="sticky-top">
+          <tr>
+            <th *ngFor="let column of columns">
+              <app-column-header [config]="column" [hasActiveFilter]="hasActiveFilter(column.key)"
+                [excelFiltersEnabled]="excelFiltersEnabled" (filter)="onFilter($event)">
+              </app-column-header>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of data">
+            <td *ngFor="let column of columns">
+              <span [ngClass]="{
+                'text-center': column.type === 'boolean',
+                'text-end': column.type === 'number',
+              }"
+                [innerHTML]="searchTerm ? highlightSearchTerm(formatCellValue(row, column)) : formatCellValue(row, column)">
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="footer">
+      <app-pagination [config]="paginationConfig" (pageChange)="onPageChange($event)"
+        (pageSizeChange)="onPageSizeChange($event)" (goToPage)="onGoToPage($event)">
+      </app-pagination>
+    </div>
+
+    <!-- Filter Panel -->
+    <app-filter-panel *ngIf="filterPanelColumn" [column]="filterPanelColumn" [isVisible]="filterPanelVisible"
+      [position]="filterPanelPosition" (apply)="onFilterApply($event)" (close)="onFilterClose()">
+    </app-filter-panel>
+  </div>
+</div> 

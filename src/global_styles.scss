@@ -1,0 +1,139 @@
+/* Custom theme variables that work with Bootstrap */
+:root {
+  /* Default theme variables */
+  --theme-primary: #2563eb;
+  --theme-secondary: #64748b;
+  --theme-accent: #06b6d4;
+  --theme-background: #ffffff;
+  --theme-surface: #ffffff;
+  --theme-text: #1e293b;
+  --theme-textSecondary: #64748b;
+  --theme-border: #e2e8f0;
+  --theme-hover: #f0f7ff;
+  --theme-headerBg: #f0f7ff;
+  --theme-headerText: #334155;
+  --theme-filterBg: #ffffff;
+  --theme-filterText: #475569;
+  --theme-activeBg: #2563eb;
+  --theme-activeText: #ffffff;
+
+  /* Additional design tokens */
+  --theme-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --theme-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --theme-radius: 0.5rem;
+  --theme-radius-sm: 0.25rem;
+  --theme-radius-lg: 0.75rem;
+}
+
+/* Override Bootstrap variables with theme variables */
+// :root {
+//   --bs-primary: var(--theme-primary);
+//   --bs-secondary: var(--theme-secondary);
+//   --bs-info: var(--theme-accent);
+//   --bs-light: var(--theme-background);
+//   --bs-dark: var(--theme-text);
+//   --bs-body-bg: var(--theme-background);
+//   --bs-body-color: var(--theme-text);
+//   --bs-border-color: var(--theme-border);
+//   --bs-border-radius: var(--theme-radius);
+// }
+
+body {
+  background-color: #ffffff;
+  padding: 2rem;
+  color: var(--theme-text);
+}
+
+/* Custom scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--theme-surface);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--theme-secondary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--theme-primary);
+}
+
+/* Smooth transitions for theme changes */
+* {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ag-container {
+
+  .btn {
+    cursor: pointer;
+  }
+
+  .btn:disabled {
+    pointer-events: auto;
+    cursor: not-allowed;
+  }
+
+  .search-container {
+    position: relative;
+    max-width: 300px;
+  }
+
+  .search-icon {
+    position: absolute;
+    top: 50%;
+    left: 0.8rem;
+    /* Adjust as needed */
+    transform: translateY(-50%);
+    pointer-events: none;
+    /* Allows clicking through the icon to the input */
+    /* Muted color */
+  }
+
+  .search-input {
+    padding-left: 2.5rem;
+    /* Make space for the icon */
+  }
+
+  .footer {
+    border: 1px solid var(--theme-border);
+    margin-top: 10px;
+    padding: 0px 10px;
+    background: var(--theme-headerBg);
+    border-radius: 3px;
+  }
+
+
+  .active-filter {
+    border: 1px solid #e3f1ff;
+    padding: 0.5rem;
+    background: #e3f1ff;
+  }
+
+}
+
+/* Loading animation */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
+  border: 2px solid var(--theme-border);
+  border-top: 2px solid var(--theme-primary);
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 1s linear infinite;
+}

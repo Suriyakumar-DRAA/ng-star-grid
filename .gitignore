@@ -1,2 +1,4 @@
+.angular
+dist
 node_modules
-.angular/
+.env
