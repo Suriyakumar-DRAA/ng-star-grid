@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { DataTableComponent } from './components/data-table/data-table.component';
 import { ServerDataTableComponent } from './components/server-data-table/server-data-table.component';
 import { TableColumn } from './interfaces/filter.interface';
+import { ColumnConfig } from './types/column.types';
 
 @Component({
   selector: 'app-root',
@@ -14,11 +15,11 @@ import { TableColumn } from './interfaces/filter.interface';
 export class AppComponent {
   currentDemo: 'client' | 'server' = 'client';
 
-  columns: TableColumn[] = [
+  columns: ColumnConfig[] = [
     { key: 'name', label: 'Name', type: 'text', sortable: true },
     { key: 'email', label: 'Email', type: 'text', sortable: true },
     { key: 'department', label: 'Department', type: 'text', sortable: true },
-    { key: 'salary', label: 'Salary', type: 'number', sortable: true },
+    { key: 'salary', label: 'Salary', type: 'currency', sortable: true },
     { key: 'isActive', label: 'Active', type: 'boolean', sortable: true },
     { key: 'joinDate', label: 'Join Date', type: 'date', sortable: true },
     { key: 'location', label: 'Location', type: 'text', sortable: true }

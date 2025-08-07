@@ -73,7 +73,7 @@
         <tr *ngFor="let row of filteredData; let i = index" class="data-row" [class.even]="i % 2 === 0"
           [class.odd]="i % 2 === 1">
           <td *ngFor="let column of columns" class="data-cell" [attr.data-type]="column.type">
-            <span class="cell-content">{{formatCellValue(row[column.key], column.type)}}</span>
+            <span class="cell-content">{{formatCellValue(row[column.key], column.type, getColumnFormat(column))}}</span>
           </td>
         </tr>
         <tr *ngIf="filteredData.length === 0" class="no-data-row">

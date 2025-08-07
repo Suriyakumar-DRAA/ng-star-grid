@@ -1,21 +1,24 @@
 import { Component, Input, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, formatDate, CurrencyPipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { FilterDropdownComponent } from '../filter-dropdown/filter-dropdown.component'; // Corrected import path
 import { FilterService } from '../../services/filter.service'; // Corrected import path
 import { TableData, TableColumn, ColumnFilter, SortOption } from '../../interfaces/filter.interface'; // Corrected import path
+import { ColumnConfig } from '../../types/column.types';
+import { DEFAULT_FORMATS } from '../../app.constants';
 
 @Component({
   selector: 'app-data-table',
   standalone: true,
   imports: [CommonModule, FilterDropdownComponent, FormsModule],
+  providers: [CurrencyPipe, DecimalPipe], // Provide pipes for use in the component
   templateUrl: './data-table.component.html', // Link to HTML
   styleUrls: ['./data-table.component.css'] // Link to CSS
 })
 export class DataTableComponent implements OnInit, OnDestroy {
   @Input() data: TableData[] = [];
-  @Input() columns: TableColumn[] = [];
+  @Input() columns: ColumnConfig[] = [];
 
   filteredData: TableData[] = [];
   originalData: TableData[] = [];
@@ -26,19 +29,24 @@ export class DataTableComponent implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
 
-  constructor(private filterService: FilterService) {}
+  constructor(
+    private filterService: FilterService,
+    private currencyPipe: CurrencyPipe,
+    private decimalPipe: DecimalPipe,
+  ) {
+  }
 
   ngOnInit() {
     this.originalData = [...this.data];
     this.filteredData = [...this.data];
-    
+
     // Initialize filters
     const columnKeys = this.columns.map(col => col.key);
     this.filters = this.filterService.initializeFilters(this.data, columnKeys);
-    
+
     // Set data in service
     this.filterService.setData(this.data);
-    
+
     // Subscribe to filtered data
     this.filterService.filteredData$
       .pipe(takeUntil(this.destroy$))
@@ -85,7 +93,7 @@ export class DataTableComponent implements OnInit, OnDestroy {
     }
   }
 
-  onSortChange(sortOption: {column: string, direction: 'asc' | 'desc' | null}) {
+  onSortChange(sortOption: { column: string, direction: 'asc' | 'desc' | null }) {
     if (this.filtersEnabled) {
       this.filterService.updateSort(sortOption);
     }
@@ -93,9 +101,9 @@ export class DataTableComponent implements OnInit, OnDestroy {
 
   toggleSort(column: string) {
     if (!this.filtersEnabled) return;
-    
+
     let newDirection: 'asc' | 'desc' | null = 'asc';
-    
+
     if (this.currentSort.column === column) {
       if (this.currentSort.direction === 'asc') {
         newDirection = 'desc';
@@ -103,7 +111,7 @@ export class DataTableComponent implements OnInit, OnDestroy {
         newDirection = null;
       }
     }
-    
+
     this.filterService.updateSort({ column, direction: newDirection });
   }
 
@@ -125,34 +133,34 @@ export class DataTableComponent implements OnInit, OnDestroy {
 
   hasActiveFilters(): boolean {
     if (!this.filtersEnabled) return false;
-    
-    return Array.from(this.filters.values()).some(filter => 
-      !filter.showAll || 
-      !!filter.condition || 
+
+    return Array.from(this.filters.values()).some(filter =>
+      !filter.showAll ||
+      !!filter.condition ||
       !!filter.colorFilter ||
       (!!filter.searchText && filter.searchText.trim() !== '') ||
       filter.options.some(option => !option.selected)
     ) || !!this.currentSort.direction;
   }
 
-  getActiveFiltersInfo(): Array<{column: string, description: string}> {
-    const activeFilters: Array<{column: string, description: string}> = [];
-    
+  getActiveFiltersInfo(): Array<{ column: string, description: string }> {
+    const activeFilters: Array<{ column: string, description: string }> = [];
+
     Array.from(this.filters.entries()).forEach(([columnKey, filter]) => {
       const descriptions: string[] = [];
-      
+
       // Check for unselected options
       const unselectedOptions = filter.options.filter(option => !option.selected);
       if (unselectedOptions.length > 0 && unselectedOptions.length < filter.options.length) {
         const selectedCount = filter.options.length - unselectedOptions.length;
         descriptions.push(`${selectedCount} selected`);
       }
-      
+
       // Check for search text
       if (filter.searchText && filter.searchText.trim() !== '') {
         descriptions.push(`contains "${filter.searchText}"`);
       }
-      
+
       // Check for conditions
       if (filter.condition) {
         const conditionDesc = this.getConditionDescription(filter.condition);
@@ -160,12 +168,12 @@ export class DataTableComponent implements OnInit, OnDestroy {
           descriptions.push(conditionDesc);
         }
       }
-      
+
       // Check for color filter
       if (filter.colorFilter && filter.colorFilter !== '') {
         descriptions.push(`color: ${filter.colorFilter}`);
       }
-      
+
       if (descriptions.length > 0) {
         const columnLabel = this.getColumnLabel(columnKey);
         activeFilters.push({
@@ -174,7 +182,7 @@ export class DataTableComponent implements OnInit, OnDestroy {
         });
       }
     });
-    
+
     return activeFilters;
   }
 
@@ -220,12 +228,30 @@ export class DataTableComponent implements OnInit, OnDestroy {
     return this.getColumnLabel(this.currentSort.column);
   }
 
-  formatCellValue(value: any, type: string): string {
+  getColumnFormat(column: ColumnConfig): string {
+    // Type-safe way to get format property
+    if (column.type === 'currency' || column.type === 'date' || column.type === 'decimal') {
+      return (column as any).format || '';
+    }
+    return '';
+  }
+
+  formatCellValue(value: any, type: string, format: string = ''): string {
     if (value === null || value === undefined) return '';
-    
+
     switch (type) {
       case 'date':
-        return value instanceof Date ? value.toLocaleDateString() : new Date(value).toLocaleDateString();
+        const dateFormat = format ? format : DEFAULT_FORMATS.date;
+        return formatDate(value, dateFormat, 'en-IN');
+      case 'currency':
+        const currencyFormat = format ? format : DEFAULT_FORMATS.currency;
+        // Use Angular's CurrencyPipe
+        return this.decimalPipe.transform(value, '1.0-0') || '';
+        // return this.currencyPipe.transform(value, currencyFormat, 'symbol', '1.0-0') || ''
+      case 'decimal':
+        const decimalFormat = format ? format : DEFAULT_FORMATS.decimal;
+        // Use Angular's DecimalPipe
+        return this.decimalPipe.transform(value, decimalFormat) || '';
       case 'number':
         return typeof value === 'number' ? value.toLocaleString() : value.toString();
       case 'boolean':

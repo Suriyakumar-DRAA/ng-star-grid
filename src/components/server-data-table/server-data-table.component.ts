@@ -7,6 +7,7 @@ import { PaginationComponent } from '../pagination/pagination.component';
 import { ServerFilterService } from '../../services/server-filter.service';
 import { TableData, TableColumn, ColumnFilter, SortOption } from '../../interfaces/filter.interface';
 import { PaginationResponse, LoadingState } from '../../interfaces/pagination.interface';
+import { ColumnConfig } from '../../types/column.types';
 
 @Component({
   selector: 'app-server-data-table',
@@ -16,7 +17,7 @@ import { PaginationResponse, LoadingState } from '../../interfaces/pagination.in
   styleUrls: ['./server-data-table.component.css'] // Linked to external CSS file
 })
 export class ServerDataTableComponent implements OnInit, OnDestroy {
-  @Input() columns: TableColumn[] = [];
+  @Input() columns: ColumnConfig[] = [];
 
   currentData: TableData[] = [];
   filters: Map<string, ColumnFilter> = new Map();
