@@ -36,4 +36,11 @@
     transform: translateY(-1px);
     box-shadow: var(--theme-shadow);
   }
+
+  .sort-indicator {
+    font-size: 0.8em;
+    color: var(--theme-primary);
+    font-weight: bold;
+    padding-right: 5px;
+  }
 }

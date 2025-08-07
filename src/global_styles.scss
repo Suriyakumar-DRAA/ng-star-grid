@@ -103,12 +103,11 @@ body {
 
   .footer {
     border: 1px solid var(--theme-border);
-    margin-top: 10px;
     padding: 0px 10px;
     background: var(--theme-headerBg);
     border-radius: 3px;
+    min-height: 30px;
   }
-
 
   .active-filter {
     border: 1px solid #e3f1ff;

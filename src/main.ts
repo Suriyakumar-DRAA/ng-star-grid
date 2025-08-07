@@ -2,6 +2,17 @@ import { Component } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { DataTableComponent } from './app/components/data-table/data-table.component';
 
+export interface Employee {
+  id: number;
+  name: string;
+  email: string;
+  department: string;
+  salary: number;
+  active: boolean;
+  joinDate: string;
+  location: string;
+}
+
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -9,7 +20,7 @@ import { DataTableComponent } from './app/components/data-table/data-table.compo
   template: `
     <div class="ag-container">
       <main>
-        <app-data-table></app-data-table>
+        <app-data-table [data]="data" [columns]="columns"></app-data-table>
       </main>
     </div>
   `,
@@ -29,6 +40,56 @@ import { DataTableComponent } from './app/components/data-table/data-table.compo
     }
   `]
 })
-export class App {}
+export class App {
+  data: Array<any> = [];
+  columns: Array<any> = []
+
+  constructor() {
+    this.columns = this.generateColumnConfig();
+    setTimeout(() => {
+      this.data = this.generateSampleData();
+    }, 2000);
+  }
+
+  private generateSampleData(): Employee[] {
+    const departments = ['Marketing', 'Design', 'Operations', 'Legal', 'IT', 'HR', 'Finance', 'Customer Service', 'Engineering'];
+    const locations = ['Memphis', 'Oklahoma City', 'Miami', 'Boston', 'Charlotte', 'Indianapolis', 'Milwaukee', 'Baltimore', 'El Paso', 'Omaha', 'Las Vegas', 'Chicago'];
+    const firstNames = ['Jason', 'Andrea', 'Helen', 'Ashley', 'Larry', 'Michael', 'Edward', 'Rachel', 'Heather', 'Stephen', 'Janet', 'Rachel'];
+    const lastNames = ['Ramirez', 'Nguyen', 'White', 'Phillips', 'Brown', 'Green', 'Rogers', 'Reyes', 'Richardson', 'Allen', 'Ortiz', 'Perez', 'Garcia'];
+
+    const data: Employee[] = [];
+    for (let i = 1; i <= 100000; i++) {
+      data.push({
+        id: i,
+        name: `${firstNames[Math.floor(Math.random() * firstNames.length)]} ${lastNames[Math.floor(Math.random() * lastNames.length)]}`,
+        email: `employee${i}@company.com`,
+        department: departments[Math.floor(Math.random() * departments.length)],
+        salary: Math.floor(Math.random() * 100000) + 40000,
+        active: Math.random() > 0.1,
+        joinDate: this.randomDate(new Date(2020, 0, 1), new Date()).toISOString().split('T')[0],
+        location: locations[Math.floor(Math.random() * locations.length)]
+      });
+    }
+    return data;
+  }
+
+  private generateColumnConfig() {
+    return [
+      { key: 'id', label: 'ID', type: 'number', sortable: true, filterable: true },
+      { key: 'name', label: 'Name', type: 'text', sortable: true, filterable: true },
+      { key: 'email', label: 'Email', type: 'text', sortable: true, filterable: true },
+      { key: 'department', label: 'Department', type: 'text', sortable: true, filterable: true },
+      { key: 'salary', label: 'Salary', type: 'currency', symbol: true, format: '', sortable: true, filterable: true },
+      { key: 'active', label: 'Active', type: 'boolean', sortable: true, filterable: true },
+      { key: 'joinDate', label: 'Join Date', type: 'date', format: 'dd-MMM-yyyy', sortable: true, filterable: true },
+      { key: 'location', label: 'Location', type: 'text', sortable: true, filterable: true }
+    ];
+  }
+
+  private randomDate(start: Date, end: Date): Date {
+    return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+  }
+
+}
 
 bootstrapApplication(App);

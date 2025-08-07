@@ -33,8 +33,8 @@
         <!-- Search Box (not in an input group) -->
         <div class="search-container col-12">
           <i class="bi bi-search search-icon"></i>
-          <input type="text" class="form-control form-control-sm search-input" placeholder="Search all columns..." aria-label="Search"
-            [(ngModel)]="searchTerm" (ngModelChange)="onSearchChange()">
+          <input type="text" class="form-control form-control-sm search-input" placeholder="Search all columns..."
+            aria-label="Search" [(ngModel)]="searchTerm" (ngModelChange)="onSearchChange()">
         </div>
         <!-- Export to Excel Button -->
         <button type="button" class="btn btn-light btn-sm border">
@@ -53,13 +53,19 @@
           <tr>
             <th *ngFor="let column of columns">
               <app-column-header [config]="column" [hasActiveFilter]="hasActiveFilter(column.key)"
-                [excelFiltersEnabled]="excelFiltersEnabled" (filter)="onFilter($event)">
+                [excelFiltersEnabled]="excelFiltersEnabled" [sortDirection]="getSortDirection(column.key)"
+                (filter)="onFilter($event)" (sort)="onSort($event)">
               </app-column-header>
             </th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let row of data">
+          <tr *ngIf="displayData.length === 0">
+            <td [attr.colspan]="columns.length" class="text-center">
+              No data available
+            </td>
+          </tr>
+          <tr *ngFor="let row of displayData">
             <td *ngFor="let column of columns">
               <span [ngClass]="{
                 'text-center': column.type === 'boolean',
@@ -75,7 +81,7 @@
 
     <!-- Pagination -->
     <div class="footer">
-      <app-pagination [config]="paginationConfig" (pageChange)="onPageChange($event)"
+      <app-pagination *ngIf="displayData.length > 0" [config]="paginationConfig" (pageChange)="onPageChange($event)"
         (pageSizeChange)="onPageSizeChange($event)" (goToPage)="onGoToPage($event)">
       </app-pagination>
     </div>

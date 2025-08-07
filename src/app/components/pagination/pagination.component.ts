@@ -17,7 +17,7 @@ export class PaginationComponent {
   @Output() pageSizeChange = new EventEmitter<number>();
   @Output() goToPage = new EventEmitter<number>();
 
-  pageSizeOptions = [25, 50, 100, -1];
+  pageSizeOptions = [25, 50, 100, 1000];
   goToPageValue = '';
 
   get totalPages(): number {

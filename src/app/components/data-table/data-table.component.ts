@@ -1,14 +1,14 @@
-import { Component, OnInit, OnDestroy, HostListener, ViewEncapsulation } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, ViewEncapsulation, Input } from '@angular/core';
 import { CommonModule, CurrencyPipe, DecimalPipe, formatDate } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil, combineLatest, debounceTime, distinctUntilChanged } from 'rxjs';
-import { DataService } from '../../services/data.service';
 import { ThemeService } from '../../services/theme.service';
-import { Employee, ColumnConfig, SortConfig, PaginationConfig, FilterConfig, FilterPanelApplyEvent } from '../../interfaces/data-table.interface';
+import { ColumnConfig, PaginationConfig, FilterPanelApplyEvent, FilterConfig, SortConfig, DataItem } from '../../interfaces/data-table.interface';
 import { ColumnHeaderComponent } from '../column-header/column-header.component';
 import { FilterPanelComponent } from '../filter-panel/filter-panel.component';
 import { PaginationComponent } from '../pagination/pagination.component';
 import { DEFAULT_FORMATS } from './../../utils/constants'
+import { GenericDataService } from '../../services/generic-data.service';
 
 @Component({
   selector: 'app-data-table',
@@ -26,14 +26,19 @@ import { DEFAULT_FORMATS } from './../../utils/constants'
   styleUrls: ['./data-table.component.scss'],
   encapsulation: ViewEncapsulation.Emulated
 })
-export class DataTableComponent implements OnInit, OnDestroy {
-  data: Employee[] = [];
+export class DataTableComponent<T extends DataItem = DataItem> implements OnInit, OnDestroy {
+  @Input() data: T[] = [];
+  @Input() columns: ColumnConfig[] = [];
+
+  visibleColumns = new Set<string>();
+  displayColumns: ColumnConfig[] = [];
   totalRecords = 0;
   filteredRecords = 0;
   excelFiltersEnabled = true;
   searchTerm = '';
   private searchSubject = new Subject<string>();
 
+  displayData: T[] = [];
   sortConfig: SortConfig | null = null;
   paginationConfig: PaginationConfig = {
     currentPage: 1,
@@ -41,42 +46,63 @@ export class DataTableComponent implements OnInit, OnDestroy {
     totalRecords: 0
   };
 
-  activeFilters = new Map<keyof Employee, FilterConfig>();
-  activeFiltersArray: { column: keyof Employee, config: FilterConfig }[] = [];
+  activeFilters = new Map<string, FilterConfig>();
+  activeFiltersArray: { column: string, config: FilterConfig }[] = [];
 
   // Filter Panel State
   filterPanelVisible = false;
-  filterPanelColumn: keyof Employee | null = null;
+  filterPanelColumn: string | null = null;
   filterPanelPosition = { top: 0, left: 0 };
 
   private destroy$ = new Subject<void>();
 
-  columns: ColumnConfig[] = [
-    { key: 'id', label: 'ID', type: 'number', sortable: true, filterable: true },
-    { key: 'name', label: 'Name', type: 'text', sortable: true, filterable: true },
-    { key: 'email', label: 'Email', type: 'text', sortable: true, filterable: true },
-    { key: 'department', label: 'Department', type: 'text', sortable: true, filterable: true },
-    { key: 'salary', label: 'Salary', type: 'currency', symbol: true, sortable: true, filterable: true },
-    { key: 'active', label: 'Active', type: 'boolean', sortable: true, filterable: true },
-    { key: 'joinDate', label: 'Join Date', type: 'date', format: 'dd-MMM-yyyy', sortable: true, filterable: true },
-    { key: 'location', label: 'Location', type: 'text', sortable: true, filterable: true }
-  ];
-
   constructor(
-    private dataService: DataService,
+    private dataService: GenericDataService<T>,
     private themeService: ThemeService,
     private decimalPipe: DecimalPipe,
   ) { }
 
   ngOnInit(): void {
-    this.totalRecords = this.dataService.getTotalRecords();
     this.themeService.initializeTheme();
     this.setupSubscriptions();
+    this.initializeData();
+  }
+
+  ngOnChanges(): void {
+    // Reinitialize when input data changes (important for API data loading)
+    if (this.data && this.columns) {
+      this.initializeData();
+    }
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  private initializeData(): void {
+    console.log('Initializing data table with:', this.data.length, 'records and', this.columns.length, 'columns');
+    console.log('First record:', this.data[0]);
+    console.log('Columns:', this.columns.map(c => ({ key: c.key, label: c.label })));
+
+    if (this.data.length > 0 && this.columns.length > 0) {
+      // Initialize all columns as visible by default
+      this.visibleColumns = new Set(this.columns.map(c => c.key));
+      this.updateDisplayColumns();
+
+      // Clear any existing filters and state
+      this.dataService.clearAllFilters();
+      this.searchTerm = '';
+      this.dataService.setSearch('');
+
+      // Initialize with new data
+      this.dataService.initialize(this.data, this.columns);
+      this.totalRecords = this.dataService.getTotalRecords();
+    }
+  }
+
+  private updateDisplayColumns(): void {
+    this.displayColumns = this.columns.filter(column => this.visibleColumns.has(column.key));
   }
 
   private setupSubscriptions(): void {
@@ -93,7 +119,7 @@ export class DataTableComponent implements OnInit, OnDestroy {
     this.dataService.paginatedData$
       .pipe(takeUntil(this.destroy$))
       .subscribe(data => {
-        this.data = data;
+        this.displayData = data;
       });
 
     // Subscribe to filtered data to get count
@@ -126,11 +152,11 @@ export class DataTableComponent implements OnInit, OnDestroy {
       });
   }
 
-  onSort(event: { column: keyof Employee, direction: 'asc' | 'desc' }): void {
+  onSort(event: { column: string, direction: 'asc' | 'desc' }): void {
     this.dataService.setSort(event.column, event.direction);
   }
 
-  onFilter(event: { column: keyof Employee, event: MouseEvent }): void {
+  onFilter(event: { column: string, event: MouseEvent }): void {
     if (!this.excelFiltersEnabled) return;
 
     console.log('onFilter called with column:', event.column);
@@ -166,7 +192,7 @@ export class DataTableComponent implements OnInit, OnDestroy {
     this.filterPanelColumn = null;
   }
 
-  hasActiveFilter(column: keyof Employee): boolean {
+  hasActiveFilter(column: string): boolean {
     return this.activeFilters.has(column);
   }
 
@@ -202,11 +228,11 @@ export class DataTableComponent implements OnInit, OnDestroy {
     }
   }
 
-  removeFilter(column: keyof Employee): void {
+  removeFilter(column: string): void {
     this.dataService.setFilter(column, []);
   }
 
-  getFilterLabel(column: keyof Employee): string {
+  getFilterLabel(column: string): string {
     const config = this.activeFilters.get(column);
     if (!config) return '';
 
@@ -429,6 +455,22 @@ export class DataTableComponent implements OnInit, OnDestroy {
     // Add remaining text
     result += text.substring(lastIndex);
     return result;
+  }
+
+  getSortDirection(column: string): 'asc' | 'desc' | null {
+    if (this.sortConfig && this.sortConfig.column === column) {
+      return this.sortConfig.direction;
+    }
+    return null;
+  }
+
+  onColumnVisibilityChange(event: { column: string, visible: boolean }): void {
+    if (event.visible) {
+      this.visibleColumns.add(event.column);
+    } else {
+      this.visibleColumns.delete(event.column);
+    }
+    this.updateDisplayColumns();
   }
 
 }
