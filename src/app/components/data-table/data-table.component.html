@@ -65,14 +65,26 @@
               No data available
             </td>
           </tr>
-          <tr *ngFor="let row of displayData">
-            <td *ngFor="let column of columns">
-              <span [ngClass]="{
-                'text-center': column.type === 'boolean',
-                'text-end': column.type === 'number',
-              }"
-                [innerHTML]="searchTerm ? highlightSearchTerm(formatCellValue(row, column)) : formatCellValue(row, column)">
-              </span>
+          <tr *ngFor="let row of displayData" (click)="onRowClick(row)">
+            <td *ngFor="let column of columns" [style.width]="column.width" class="{{ column.class || '' }}"
+              (click)="onColumnClick($event, row, column)">
+              <ng-container *ngIf="column.template; else defaultCell">
+                <ng-container
+                  *ngTemplateOutlet="column.template; context: { $implicit: row[column.key], row: row, column: column }">
+                </ng-container>
+              </ng-container>
+
+              <ng-template #defaultCell>
+                <ng-container [ngSwitch]="!!column.link">
+                  <a *ngSwitchCase="true" [href]="row[column.link!.hrefKey]"
+                    [attr.target]="column.link!.target || '_self'" [innerHTML]="getFormattedCell(row, column)">
+                  </a>
+                  <span *ngSwitchDefault>
+                    <span class="{{ getHighlightClass(row[column.key], column) }}"
+                      [innerHTML]="getFormattedCell(row, column)"></span>
+                  </span>
+                </ng-container>
+              </ng-template>
             </td>
           </tr>
         </tbody>
@@ -91,4 +103,4 @@
       [position]="filterPanelPosition" (apply)="onFilterApply($event)" (close)="onFilterClose()">
     </app-filter-panel>
   </div>
-</div> 
+</div>

@@ -6,7 +6,7 @@
       {{ sortDirection === 'asc' ? '↑' : '↓' }}
     </span>
 
-    <button type="button" data-filter-trigger class="btn btn-sm p-1" [class.btn-primary]="hasActiveFilter"
+    <button type="button" *ngIf="config.filterable" data-filter-trigger class="btn btn-sm p-1" [class.btn-primary]="hasActiveFilter"
       [class.btn-outline-secondary]="!hasActiveFilter" (click)="onFilter($event)"
       style="font-size: 0.7em; line-height: 1;">
       ▼

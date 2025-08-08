@@ -1,9 +1,19 @@
+import { TemplateRef } from "@angular/core";
 
 export type types = 'text' | 'email' | 'number' | 'boolean' | 'decimal' | 'currency' | 'date';
 export type DateFormat = 'dd/MM/yyyy' | 'dd-MMM-yyyy' | 'HH:mm:ss a' | 'dd-MMM-yyyy hh:mm:ss a';
 export type CurrencyFormat = 'USD' | 'INR' | 'EUR'; // add more as needed
 export type DecimalFormat = '1.0-0' | '1.0-2' | '1.2-2' | '1.2-3'; // Angular decimal pipe format
+export interface LinkFormat {
+  hrefKey: string;
+  target?: '_blank' | '_self' | '_parent' | '_top';
+}
 
+export interface HighlightColumn {
+  type?: 'badge' | 'text';
+  classMap?: { [key: string]: string }; // optional static map
+  getClassFn?: (value: any, row?: any) => ('badge bg-success' | 'badge bg-warning text-dark' | 'badge bg-danger'); // dynamic class generator
+}
 export interface DataItem {
   [key: string]: any;
 }
@@ -32,12 +42,51 @@ export interface FilterOption {
   selected: boolean;
 }
 
+interface BaseColumnConfig {
+  key: string;
+  label: string;
+  class?: string;
+  sortable?: boolean;
+  filterable?: boolean;
+  width?: string;
+  link?: LinkFormat;
+  highlightColumn?: HighlightColumn;
+  template?: TemplateRef<any>;
+  displayDataFn?: (value: any, row?: any) => string;
+}
+
+interface TextColumnConfig extends BaseColumnConfig {
+  type: 'text';
+  format?: string;
+}
+
+interface NumberColumnConfig extends BaseColumnConfig {
+  type: 'number';
+  digit?: number;
+}
+
+interface BooleanColumnConfig extends BaseColumnConfig {
+  type: 'boolean';
+}
+
+interface CurrencyColumnConfig extends BaseColumnConfig {
+  type: 'currency';
+  symbol?: boolean;
+  format?: CurrencyFormat;
+  digit?: number;
+}
+
+interface DateColumnConfig extends BaseColumnConfig {
+  type: 'date';
+  format?: DateFormat;
+}
+
 export type ColumnConfig =
-  | { key: string; label: string; type: 'text', sortable?: boolean; filterable?: boolean; width?: string; format?: string; }
-  | { key: string; label: string; type: 'number', digit?: number; sortable?: boolean; filterable?: boolean; width?: string; }
-  | { key: string; label: string; type: 'boolean', sortable?: boolean; filterable?: boolean; width?: string; }
-  | { key: string; label: string; type: 'currency'; symbol?: boolean; format?: CurrencyFormat, digit?: number; sortable?: boolean; filterable?: boolean; width?: string; }
-  | { key: string; label: string; type: 'date'; format?: DateFormat, sortable?: boolean; filterable?: boolean; width?: string; };
+  | TextColumnConfig
+  | NumberColumnConfig
+  | BooleanColumnConfig
+  | CurrencyColumnConfig
+  | DateColumnConfig;
 
 export interface SortConfig {
   column: string;
@@ -76,34 +125,4 @@ export interface FilterPanelApplyEvent {
     value?: string;
     value2?: string;
   };
-}
-export interface Employee extends DataItem {
-  id: number;
-  name: string;
-  email: string;
-  department: string;
-  salary: number;
-  active: boolean;
-  joinDate: string;
-  location: string;
-}
-export interface Product extends DataItem {
-  id: number;
-  name: string;
-  category: string;
-  price: number;
-  inStock: boolean;
-  createdDate: string;
-  supplier: string;
-  description: string;
-}
-export interface Customer extends DataItem {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  totalOrders: number;
-  isActive: boolean;
-  registrationDate: string;
-  city: string;
 }

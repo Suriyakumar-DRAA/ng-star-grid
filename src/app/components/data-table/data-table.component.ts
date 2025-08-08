@@ -1,7 +1,7 @@
-import { Component, OnInit, OnDestroy, HostListener, ViewEncapsulation, Input } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, ViewEncapsulation, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule, CurrencyPipe, DecimalPipe, formatDate } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subject, takeUntil, combineLatest, debounceTime, distinctUntilChanged } from 'rxjs';
+import { Subject, takeUntil, combineLatest, debounceTime, distinctUntilChanged, retry } from 'rxjs';
 import { ThemeService } from '../../services/theme.service';
 import { ColumnConfig, PaginationConfig, FilterPanelApplyEvent, FilterConfig, SortConfig, DataItem } from '../../interfaces/data-table.interface';
 import { ColumnHeaderComponent } from '../column-header/column-header.component';
@@ -30,13 +30,15 @@ export class DataTableComponent<T extends DataItem = DataItem> implements OnInit
   @Input() data: T[] = [];
   @Input() columns: ColumnConfig[] = [];
 
+  @Output() rowClick = new EventEmitter<any>();
+  @Output() columnClick = new EventEmitter<{ row: any; column: ColumnConfig }>();
+
   visibleColumns = new Set<string>();
   displayColumns: ColumnConfig[] = [];
   totalRecords = 0;
   filteredRecords = 0;
   excelFiltersEnabled = true;
   searchTerm = '';
-  private searchSubject = new Subject<string>();
 
   displayData: T[] = [];
   sortConfig: SortConfig | null = null;
@@ -54,6 +56,7 @@ export class DataTableComponent<T extends DataItem = DataItem> implements OnInit
   filterPanelColumn: string | null = null;
   filterPanelPosition = { top: 0, left: 0 };
 
+  private searchSubject = new Subject<string>();
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -65,13 +68,16 @@ export class DataTableComponent<T extends DataItem = DataItem> implements OnInit
   ngOnInit(): void {
     this.themeService.initializeTheme();
     this.setupSubscriptions();
-    this.initializeData();
+    this.initializeData(this.data);
   }
 
-  ngOnChanges(): void {
+  async ngOnChanges() {
     // Reinitialize when input data changes (important for API data loading)
     if (this.data && this.columns) {
-      this.initializeData();
+      // console.time("forLoopTime");
+      // const formattedData = await this.bindData(this.data);
+      // console.timeEnd("forLoopTime");
+      this.initializeData(this.data);
     }
   }
 
@@ -80,12 +86,8 @@ export class DataTableComponent<T extends DataItem = DataItem> implements OnInit
     this.destroy$.complete();
   }
 
-  private initializeData(): void {
-    console.log('Initializing data table with:', this.data.length, 'records and', this.columns.length, 'columns');
-    console.log('First record:', this.data[0]);
-    console.log('Columns:', this.columns.map(c => ({ key: c.key, label: c.label })));
-
-    if (this.data.length > 0 && this.columns.length > 0) {
+  private initializeData(formattedData: T[]): void {
+    if (formattedData.length > 0 && this.columns.length > 0) {
       // Initialize all columns as visible by default
       this.visibleColumns = new Set(this.columns.map(c => c.key));
       this.updateDisplayColumns();
@@ -96,7 +98,7 @@ export class DataTableComponent<T extends DataItem = DataItem> implements OnInit
       this.dataService.setSearch('');
 
       // Initialize with new data
-      this.dataService.initialize(this.data, this.columns);
+      this.dataService.initialize(formattedData, this.columns);
       this.totalRecords = this.dataService.getTotalRecords();
     }
   }
@@ -323,18 +325,108 @@ export class DataTableComponent<T extends DataItem = DataItem> implements OnInit
     return operators[operator] || operator;
   }
 
+
+  // private async bindData(data: T[]): Promise<T[]> {
+  //   if (!data || data.length === 0) {
+  //     return [];
+  //   }
+  //   const result = [];
+  //   for (const row of data) {
+  //     const formattedRow: any = { ...row };
+  //     for (const column of this.columns) {
+  //       formattedRow[column.key] = this.formatCellValue(row, column);
+  //     }
+  //     result.push(formattedRow);
+  //   }
+  //   return result;
+  // }
+
+  private async bindData(data: T[]): Promise<T[]> {
+    if (!data?.length) return [];
+
+    // Prepare formatters once per column
+    const formatters = this.columns.map((column: any) => {
+      const { type, format = '', symbol = '', digit = 0 } = column;
+
+      if (type === 'currency') {
+        const defaultFormat = format || DEFAULT_FORMATS.currency;
+        const [locale, currency] = this.getCurrencyFormat(defaultFormat);
+        const options: Intl.NumberFormatOptions = symbol
+          ? { style: 'currency', currency, maximumFractionDigits: digit }
+          : { style: 'decimal', maximumFractionDigits: digit };
+        const formatter = new Intl.NumberFormat(locale, options);
+        return (val: any) => formatter.format(val);
+      }
+
+      if (type === 'number') {
+        return (val: any) =>
+          digit > 0
+            ? this.decimalPipe.transform(val, `1.${digit}-${digit}`) || ''
+            : typeof val === 'number'
+              ? val.toLocaleString()
+              : val.toString();
+      }
+
+      if (type === 'date') {
+        const dateFormat = format || DEFAULT_FORMATS.date;
+        return (val: any) => formatDate(val, dateFormat, 'en-IN');
+      }
+
+      if (type === 'boolean') {
+        return (val: any) => (val ? '✓' : '✗');
+      }
+
+      return (val: any) => (val !== null && val !== undefined ? val.toString() : '');
+    });
+
+    const result: T[] = new Array(data.length);
+
+    for (let i = 0; i < data.length; i++) {
+      const row = data[i];
+      const formatYestedRow: any = {};
+
+      for (let j = 0; j < this.columns.length; j++) {
+        const col = this.columns[j];
+        const rawValue = row[col.key];
+        formatYestedRow[col.key] = formatters[j](rawValue);
+      }
+
+      result[i] = formatYestedRow;
+    }
+
+    return result;
+  }
+
+  getHighlightClass(value: any, column: ColumnConfig, row?: any): string {
+    const config = column.highlightColumn;
+    if (!config) return '';
+    if (config.getClassFn) return config.getClassFn(value, row);
+    if (config.classMap) return config.classMap[value] || '';
+    return '';
+  }
+
+  getFormattedCell(row: any, column: ColumnConfig): string {
+    const rawValue = row[column.key];
+    const formatted = this.formatCellValue(row, column);
+    return this.searchTerm ? this.highlightSearchTerm(formatted) : formatted;
+  }
+
   /**
    * Formats the cell value based on its type and any specified format.
    * @param row The data row containing the value.
    * @param column The column configuration defining how to format the value.
    * @returns The formatted cell value as a string.
    */
-  formatCellValue(row: any, column: any): string {
+  formatCellValue(row: any, column: ColumnConfig): string {
     const value = row[column.key];
     const type = column.type;
-    const format = column.format || '';
-    const symbol = column.symbol || '';
-    const digit = column.digit || 0;
+    const format = (column as any).format || '';
+    const symbol = (column as any).symbol || '';
+    const digit = (column as any).digit || 0;
+    const link = (column as any).link;
+
+    if (column.displayDataFn) return column.displayDataFn(row);
+
     if (value === null || value === undefined) {
       return '';
     }
@@ -353,10 +445,7 @@ export class DataTableComponent<T extends DataItem = DataItem> implements OnInit
           options['style'] = 'currency';
           options['currency'] = currencyFormat;
         }
-
-        // Use Angular's CurrencyPipe
         return new Intl.NumberFormat(locale, options).format(value);
-      // return this.currencyPipe.transform(value, currencyFormat, 'symbol', '1.0-0') || ''
       case 'number':
         if (digit > 0) {
           return this.decimalPipe.transform(value, `1.${digit}-${digit}`) || '';
@@ -473,4 +562,12 @@ export class DataTableComponent<T extends DataItem = DataItem> implements OnInit
     this.updateDisplayColumns();
   }
 
+  onRowClick(row: any): void {
+    this.rowClick.emit(row);
+  }
+
+  onColumnClick(event: MouseEvent, row: any, column: ColumnConfig): void {
+    event.stopPropagation(); // prevent rowClick
+    this.columnClick.emit({ row, column });
+  }
 }
