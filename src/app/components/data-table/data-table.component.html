@@ -79,9 +79,8 @@
                   <a *ngSwitchCase="true" [href]="row[column.link!.hrefKey]"
                     [attr.target]="column.link!.target || '_self'" [innerHTML]="getFormattedCell(row, column)">
                   </a>
-                  <span *ngSwitchDefault>
-                    <span class="{{ getHighlightClass(row[column.key], column) }}"
-                      [innerHTML]="getFormattedCell(row, column)"></span>
+                  <span *ngSwitchDefault class="{{ getHighlightClass(row[column.key], column) }}"
+                    [innerHTML]="getFormattedCell(row, column)">
                   </span>
                 </ng-container>
               </ng-template>

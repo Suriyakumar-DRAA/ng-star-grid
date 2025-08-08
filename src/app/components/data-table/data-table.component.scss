@@ -66,4 +66,8 @@
   .table tr:last-child td {
     border-bottom: none;
   }
+
+  td .badge {
+    padding: 0.5rem
+  }
 }
